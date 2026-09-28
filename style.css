@@ -1,3 +1,7 @@
+/* ========================================
+   기본 설정
+======================================== */
+
 * {
   box-sizing: border-box;
 }
@@ -16,6 +20,7 @@ body {
     sans-serif;
 
   background: #f5f7fb;
+
   color: #172033;
 }
 
@@ -29,13 +34,19 @@ button {
 }
 
 main {
+  width: 100%;
+
   max-width: 1180px;
+
   margin: auto;
+
   padding: 20px;
 }
 
 
-/* HEADER */
+/* ========================================
+   HEADER
+======================================== */
 
 header h1 {
   margin: 0;
@@ -53,12 +64,15 @@ header p {
 }
 
 
-/* 현재 빈 강의실 */
+/* ========================================
+   현재 빈 강의실 카드
+======================================== */
 
 .quick-card {
   display: flex;
 
   align-items: center;
+
   justify-content: space-between;
 
   gap: 18px;
@@ -68,7 +82,8 @@ header p {
   padding: 16px 18px;
 
   background: #172033;
-  color: #fff;
+
+  color: white;
 
   border-radius: 16px;
 
@@ -99,7 +114,8 @@ header p {
 
   border-radius: 11px;
 
-  background: #fff;
+  background: white;
+
   color: #172033;
 
   font-weight: 800;
@@ -108,14 +124,16 @@ header p {
 }
 
 
-/* 빈 강의실 패널 */
+/* ========================================
+   빈 강의실 결과
+======================================== */
 
 .free-panel {
   margin-bottom: 12px;
 
   padding: 16px;
 
-  background: #fff;
+  background: white;
 
   border:
     1px solid #eaecf0;
@@ -130,6 +148,7 @@ header p {
   display: flex;
 
   align-items: flex-start;
+
   justify-content: space-between;
 
   gap: 12px;
@@ -159,7 +178,8 @@ header p {
 
   border-radius: 9px;
 
-  background: #fff;
+  background: white;
+
   color: #475467;
 
   font-weight: 700;
@@ -182,12 +202,12 @@ header p {
 }
 
 .building-group {
+  padding: 12px;
+
   border:
     1px solid #eaecf0;
 
   border-radius: 12px;
-
-  padding: 12px;
 }
 
 .building-group h3 {
@@ -205,28 +225,31 @@ header p {
 }
 
 .room-chip {
+  padding: 8px 10px;
+
   border: 0;
 
   border-radius: 9px;
 
   background: #f2f4f7;
+
   color: #344054;
 
-  padding: 8px 10px;
-
   font-size: 13px;
+
   font-weight: 700;
 
   cursor: pointer;
 }
 
 .room-chip:active {
-  transform:
-    scale(.98);
+  transform: scale(.98);
 }
 
 
-/* 건물 / 강의실 선택 */
+/* ========================================
+   건물 / 강의실 선택
+======================================== */
 
 .controls {
   display: grid;
@@ -236,9 +259,9 @@ header p {
 
   gap: 12px;
 
-  background: white;
-
   padding: 14px;
+
+  background: white;
 
   border-radius: 16px;
 
@@ -268,7 +291,8 @@ header p {
 
   border-radius: 10px;
 
-  background: #fff;
+  background: white;
+
   color: #172033;
 
   font-size: 16px;
@@ -281,6 +305,10 @@ header p {
 }
 
 
+/* ========================================
+   선택된 강의실 정보
+======================================== */
+
 #summary {
   min-height: 20px;
 
@@ -292,28 +320,18 @@ header p {
 }
 
 
-/*
- * 가로 스크롤 안내는
- * 더 이상 필요 없음
- */
-
-.mobile-hint {
-  display: none;
-}
-
-
-/* =========================
+/* ========================================
    시간표
-========================= */
+======================================== */
 
 .table-wrap {
   width: 100%;
 
   overflow: hidden;
 
-  border-radius: 16px;
+  background: white;
 
-  background: #fff;
+  border-radius: 16px;
 
   box-shadow:
     0 4px 20px #1018280d;
@@ -321,9 +339,9 @@ header p {
 
 
 /*
- * 교시 + 월~금
+ * 총 6열
  *
- * PC에서도 전체 폭을 사용한다.
+ * 교시 | 월 | 화 | 수 | 목 | 금
  */
 
 .timetable {
@@ -332,6 +350,8 @@ header p {
   width: 100%;
 
   min-width: 0;
+
+  position: relative;
 
   grid-template-columns:
     72px
@@ -343,56 +363,56 @@ header p {
   grid-template-rows:
     48px
     repeat(15, 64px);
-
-  position: relative;
 }
 
 
+/* 기본 셀 */
+
 .cell {
   min-width: 0;
+
+  padding: 6px;
 
   border-right:
     1px solid #eaecf0;
 
   border-bottom:
     1px solid #eaecf0;
-
-  padding: 6px;
 }
 
+
+/* 요일 / 교시 */
 
 .head,
 .period {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
-  font-weight: 700;
-
   background: #fafafa;
+
+  font-weight: 700;
 
   position: sticky;
 
   z-index: 4;
 }
 
-
 .head {
   top: 0;
 }
 
-
 .period {
   left: 0;
 
-  font-size: 12px;
-
   color: #667085;
+
+  font-size: 12px;
 
   z-index: 5;
 }
-
 
 .head:first-child {
   left: 0;
@@ -401,22 +421,16 @@ header p {
 }
 
 
-/* 수업 블록 */
+/* ========================================
+   수업 블록
+======================================== */
 
 .course {
   min-width: 0;
 
   margin: 3px;
 
-  border-radius: 9px;
-
   padding: 7px 6px;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
-  line-height: 1.25;
 
   overflow: hidden;
 
@@ -424,17 +438,26 @@ header p {
 
   word-break: keep-all;
 
+  border-radius: 9px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  line-height: 1.25;
+
   z-index: 3;
 
   box-shadow:
     0 1px 4px #00000012;
 }
 
-
 .course small {
   display: block;
 
   margin-top: 3px;
+
+  font-size: 10px;
 
   font-weight: 500;
 
@@ -442,7 +465,9 @@ header p {
 }
 
 
-/* FOOTER */
+/* ========================================
+   FOOTER
+======================================== */
 
 footer {
   padding: 16px 4px;
@@ -453,9 +478,9 @@ footer {
 }
 
 
-/* =========================
+/* ========================================
    모바일
-========================= */
+======================================== */
 
 @media (max-width: 650px) {
 
@@ -465,28 +490,30 @@ footer {
   }
 
 
+  /* HEADER */
+
   header h1 {
     font-size: 26px;
   }
 
-
   header p {
-    font-size: 13px;
-
     margin-bottom: 14px;
+
+    font-size: 13px;
   }
 
 
-  .quick-card {
-    align-items: stretch;
+  /* 현재 빈 강의실 */
 
+  .quick-card {
     flex-direction: column;
+
+    align-items: stretch;
 
     padding: 15px;
 
     border-radius: 14px;
   }
-
 
   .quick-card button {
     width: 100%;
@@ -495,38 +522,41 @@ footer {
   }
 
 
+  /* 빈 강의실 목록 */
+
   .free-panel {
     padding: 13px;
 
     border-radius: 14px;
   }
 
-
   .free-rooms {
     grid-template-columns: 1fr;
   }
-
 
   .room-chip {
     min-height: 40px;
   }
 
 
+  /* 선택 메뉴 */
+
   .controls {
     grid-template-columns: 1fr;
+
+    gap: 10px;
 
     padding: 12px;
 
     border-radius: 14px;
-
-    gap: 10px;
   }
-
 
   .controls select {
     min-height: 50px;
   }
 
+
+  /* 시간표 */
 
   .table-wrap {
     width: 100%;
@@ -538,10 +568,8 @@ footer {
 
 
   /*
-   * 모바일
-   *
-   * 왼쪽 교시 38px
-   * 나머지를 월~금이 5등분
+   * 모바일에서도
+   * 월~금 전체를 한 화면에 표시
    */
 
   .timetable {
@@ -550,7 +578,7 @@ footer {
     min-width: 0;
 
     grid-template-columns:
-      38px
+      40px
       repeat(
         5,
         minmax(0, 1fr)
@@ -558,7 +586,7 @@ footer {
 
     grid-template-rows:
       42px
-      repeat(15, 58px);
+      repeat(15, 60px);
   }
 
 
@@ -569,21 +597,27 @@ footer {
   }
 
 
-  .head {
-    font-size: 12px;
+  /* 월 화 수 목 금 */
 
+  .head {
     padding: 0;
+
+    font-size: 12px;
   }
 
 
-  .period {
-    font-size: 9px;
+  /* 0교시 ~ 14교시 */
 
+  .period {
     padding: 0;
+
+    font-size: 9px;
 
     white-space: nowrap;
   }
 
+
+  /* 모바일 수업 블록 */
 
   .course {
     min-width: 0;
@@ -607,10 +641,7 @@ footer {
     box-shadow: none;
   }
 
-
   .course small {
-    display: block;
-
     margin-top: 2px;
 
     font-size: 8px;
@@ -623,7 +654,9 @@ footer {
 }
 
 
-/* 작은 스마트폰 */
+/* ========================================
+   작은 스마트폰
+======================================== */
 
 @media (max-width: 380px) {
 
@@ -636,7 +669,7 @@ footer {
 
   .timetable {
     grid-template-columns:
-      34px
+      36px
       repeat(
         5,
         minmax(0, 1fr)
@@ -644,7 +677,7 @@ footer {
 
     grid-template-rows:
       40px
-      repeat(15, 56px);
+      repeat(15, 58px);
   }
 
 
@@ -663,9 +696,9 @@ footer {
 
     padding: 4px 2px;
 
-    font-size: 9px;
-
     border-radius: 6px;
+
+    font-size: 9px;
   }
 
 
@@ -675,9 +708,9 @@ footer {
 
 
   .free-head {
-    align-items: stretch;
-
     flex-direction: column;
+
+    align-items: stretch;
   }
 
 
