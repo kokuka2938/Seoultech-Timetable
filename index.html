@@ -1,40 +1,84 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f5f7fb">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#f5f7fb"
+  >
 
   <title>서울과기대 강의실 시간표</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
 
 <main>
 
+  <!-- =========================
+       HEADER
+  ========================== -->
+
   <header>
-    <h1>서울과기대 강의실 시간표</h1>
-    <p>2026학년도 2학기 · 월–금 · 0–14교시</p>
+
+    <h1>
+      서울과기대 강의실 시간표
+    </h1>
+
+    <p>
+      <span id="semesterText">
+        학기 정보 불러오는 중
+      </span>
+      · 월–금 · 0–14교시
+    </p>
+
   </header>
 
 
-  <section class="quick-card" aria-label="현재 사용 가능한 강의실">
+  <!-- =========================
+       현재 빈 강의실
+  ========================== -->
+
+  <section
+    class="quick-card"
+    aria-label="현재 사용 가능한 강의실"
+  >
 
     <div>
-      <strong>지금 비어 있는 강의실</strong>
+
+      <strong>
+        지금 비어 있는 강의실
+      </strong>
+
       <p id="nowText">
         서울 시간을 확인하고 있습니다.
       </p>
+
     </div>
 
-    <button id="findFreeBtn" type="button">
+
+    <button
+      id="findFreeBtn"
+      type="button"
+    >
       현재 사용 가능한 강의실 찾기
     </button>
 
   </section>
 
+
+  <!-- =========================
+       빈 강의실 결과
+  ========================== -->
 
   <section
     id="freePanel"
@@ -45,9 +89,15 @@
     <div class="free-head">
 
       <div>
-        <h2>현재 사용 가능한 강의실</h2>
+
+        <h2>
+          현재 사용 가능한 강의실
+        </h2>
+
         <p id="freeSummary"></p>
+
       </div>
+
 
       <button
         id="closeFreeBtn"
@@ -59,6 +109,7 @@
 
     </div>
 
+
     <div
       id="freeRooms"
       class="free-rooms"
@@ -67,28 +118,55 @@
   </section>
 
 
+  <!-- =========================
+       건물 / 강의실 선택
+  ========================== -->
+
   <section class="controls">
 
     <label>
+
       건물
-      <select id="building"></select>
+
+      <select id="building">
+        <option value="">
+          건물을 선택하세요
+        </option>
+      </select>
+
     </label>
 
+
     <label>
+
       강의실
-      <select id="room"></select>
+
+      <select
+        id="room"
+        disabled
+      >
+        <option value="">
+          강의실을 선택하세요
+        </option>
+      </select>
+
     </label>
 
   </section>
 
 
-  <section id="summary"></section>
+  <!-- =========================
+       선택 정보
+  ========================== -->
+
+  <section id="summary">
+    건물을 선택하세요.
+  </section>
 
 
-  <div class="mobile-hint">
-    ← 시간표를 좌우로 밀어서 다른 요일을 볼 수 있어요 →
-  </div>
-
+  <!-- =========================
+       시간표
+  ========================== -->
 
   <div class="table-wrap">
 
@@ -100,6 +178,10 @@
   </div>
 
 
+  <!-- =========================
+       FOOTER
+  ========================== -->
+
   <footer>
     서울과학기술대학교 공개 시간표 원본을 기준으로 표시합니다.
   </footer>
@@ -107,39 +189,62 @@
 </main>
 
 
+<!-- =========================
+     DATA LOADER
+
+     현재 날짜를 기준으로
+     학기별 캐시 버전을 만든다.
+
+     3~8월  = 1학기
+     9~12월 = 2학기
+     1~2월  = 전년도 2학기
+========================== -->
+
 <script>
-  /*
-   * 서울 시간 기준으로 현재 학기 버전을 계산한다.
-   *
-   * 3월 ~ 8월  → 1학기
-   * 9월 ~ 12월 → 2학기
-   * 1월 ~ 2월  → 전년도 2학기
-   */
 
-  const now = new Date();
+(function () {
 
-  const seoulDate = new Date(
-    now.toLocaleString("en-US", {
-      timeZone: "Asia/Seoul"
-    })
-  );
+  const parts =
+    new Intl.DateTimeFormat(
+      'en-US',
+      {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: 'numeric'
+      }
+    ).formatToParts(new Date());
 
-  const year = seoulDate.getFullYear();
-  const month = seoulDate.getMonth() + 1;
+
+  const getPart = type =>
+    parts.find(
+      part => part.type === type
+    )?.value;
+
+
+  const year =
+    Number(getPart('year'));
+
+  const month =
+    Number(getPart('month'));
+
 
   let semesterVersion;
 
+
   if (month >= 9) {
 
-    semesterVersion = `${year}2`;
+    semesterVersion =
+      `${year}2`;
 
   } else if (month >= 3) {
 
-    semesterVersion = `${year}1`;
+    semesterVersion =
+      `${year}1`;
 
   } else {
 
-    semesterVersion = `${year - 1}2`;
+    semesterVersion =
+      `${year - 1}2`;
 
   }
 
@@ -154,33 +259,60 @@
    * data.js?v=20271
    */
 
-  const dataScript = document.createElement("script");
+  const dataScript =
+    document.createElement('script');
+
 
   dataScript.src =
     `data.js?v=${semesterVersion}`;
 
 
-  /*
-   * data.js가 완전히 로드된 후
-   * 사이트 프로그램 실행
-   */
+  dataScript.onload =
+    function () {
 
-  dataScript.onload = () => {
-
-    const appScript =
-      document.createElement("script");
-
-    appScript.src = "script.js";
-
-    document.body.appendChild(appScript);
-
-  };
+      const appScript =
+        document.createElement('script');
 
 
-  document.body.appendChild(dataScript);
+      appScript.src =
+        'script.js';
+
+
+      document.body.appendChild(
+        appScript
+      );
+
+    };
+
+
+  dataScript.onerror =
+    function () {
+
+      const semesterText =
+        document.querySelector(
+          '#semesterText'
+        );
+
+
+      if (semesterText) {
+
+        semesterText.textContent =
+          '시간표 데이터를 불러오지 못했습니다';
+
+      }
+
+    };
+
+
+  document.body.appendChild(
+    dataScript
+  );
+
+})();
 
 </script>
 
 
 </body>
+
 </html>
