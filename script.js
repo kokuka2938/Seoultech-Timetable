@@ -690,8 +690,15 @@ function render() {
       'cell period';
 
 
-    periodCell.textContent =
-      `${period}교시`;
+    const startHour = 8 + period;
+const endHour = startHour + 1;
+
+periodCell.innerHTML = `
+  <span class="period-number">${period}교시</span>
+  <span class="period-time">
+    ${String(startHour).padStart(2, '0')}–${String(endHour).padStart(2, '0')}
+  </span>
+`;
 
 
     periodCell.style.gridColumn =
