@@ -178,7 +178,7 @@ function timesOf(s) {
 
 
 /* ========================================
-   원본 데이터를 시간표 이벤트로 변환
+   원본 데이터 변환
 ======================================== */
 
 function expand(rows) {
@@ -279,9 +279,7 @@ function expand(rows) {
   }
 
 
-  /*
-   * 중복 제거
-   */
+  /* 중복 제거 */
 
   const seen =
     new Set();
@@ -347,69 +345,37 @@ const S =
 ======================================== */
 
 const bSel =
-  document.querySelector(
-    '#building'
-  );
-
+  document.querySelector('#building');
 
 const rSel =
-  document.querySelector(
-    '#room'
-  );
-
+  document.querySelector('#room');
 
 const tt =
-  document.querySelector(
-    '#timetable'
-  );
-
+  document.querySelector('#timetable');
 
 const summary =
-  document.querySelector(
-    '#summary'
-  );
-
+  document.querySelector('#summary');
 
 const semesterText =
-  document.querySelector(
-    '#semesterText'
-  );
-
+  document.querySelector('#semesterText');
 
 const findFreeBtn =
-  document.querySelector(
-    '#findFreeBtn'
-  );
-
+  document.querySelector('#findFreeBtn');
 
 const closeFreeBtn =
-  document.querySelector(
-    '#closeFreeBtn'
-  );
-
+  document.querySelector('#closeFreeBtn');
 
 const freePanel =
-  document.querySelector(
-    '#freePanel'
-  );
-
+  document.querySelector('#freePanel');
 
 const freeRooms =
-  document.querySelector(
-    '#freeRooms'
-  );
-
+  document.querySelector('#freeRooms');
 
 const freeSummary =
-  document.querySelector(
-    '#freeSummary'
-  );
-
+  document.querySelector('#freeSummary');
 
 const nowText =
-  document.querySelector(
-    '#nowText'
-  );
+  document.querySelector('#nowText');
 
 
 /* ========================================
@@ -444,13 +410,38 @@ function updateSemesterText() {
   const year =
     match[1];
 
-
   const term =
     match[2];
 
 
   semesterText.textContent =
     `${year}학년도 ${term}학기`;
+}
+
+
+/* ========================================
+   시간표 왼쪽 시간 표시
+
+   0교시  → 8
+   1교시  → 9
+   2교시  → 10
+   3교시  → 11
+   4교시  → 12
+   5교시  → 1
+   6교시  → 2
+   ...
+   14교시 → 10
+======================================== */
+
+function displayHour(period) {
+
+  const hour24 =
+    8 + period;
+
+
+  return (
+    (hour24 - 1) % 12
+  ) + 1;
 }
 
 
@@ -470,7 +461,7 @@ const nat =
 
 
 /* ========================================
-   건물 선택
+   건물 목록
 ======================================== */
 
 function fillBuildings() {
@@ -506,7 +497,7 @@ function fillBuildings() {
 
 
 /* ========================================
-   강의실 선택
+   강의실 목록
 ======================================== */
 
 function fillRooms() {
@@ -606,9 +597,7 @@ function render() {
     '';
 
 
-  /*
-   * 왼쪽 위 빈 칸
-   */
+  /* 왼쪽 위 빈 칸 */
 
   const blank =
     document.createElement(
@@ -633,9 +622,7 @@ function render() {
   );
 
 
-  /*
-   * 월 ~ 금
-   */
+  /* 월 ~ 금 */
 
   DAYS.forEach(
     (day, index) => {
@@ -671,8 +658,12 @@ function render() {
 
 
   /*
-   * 0 ~ 14교시
-   */
+     08:00 ~ 23:00
+
+     왼쪽에는 교시가 아니라
+     8, 9, 10, 11, 12, 1...
+     만 표시
+  */
 
   for (
     let period = 0;
@@ -690,15 +681,10 @@ function render() {
       'cell period';
 
 
-    const startHour = 8 + period;
-const endHour = startHour + 1;
-
-periodCell.innerHTML = `
-  <span class="period-number">${period}교시</span>
-  <span class="period-time">
-    ${String(startHour).padStart(2, '0')}–${String(endHour).padStart(2, '0')}
-  </span>
-`;
+    periodCell.textContent =
+      displayHour(
+        period
+      );
 
 
     periodCell.style.gridColumn =
@@ -714,9 +700,7 @@ periodCell.innerHTML = `
     );
 
 
-    /*
-     * 월~금 빈 셀
-     */
+    /* 월 ~ 금 빈 셀 */
 
     for (
       let day = 0;
@@ -751,9 +735,7 @@ periodCell.innerHTML = `
   }
 
 
-  /*
-   * 아직 선택하지 않은 경우
-   */
+  /* 선택 전 */
 
   if (
     !bSel.value ||
@@ -774,9 +756,9 @@ periodCell.innerHTML = `
 
 
   /*
-   * 선택된 강의실의
-   * 월~금 수업만 가져온다.
-   */
+     선택된 강의실의
+     월~금 수업
+  */
 
   const list =
     S.filter(
@@ -798,9 +780,7 @@ periodCell.innerHTML = `
     );
 
 
-  /*
-   * 수업 블록
-   */
+  /* 수업 블록 */
 
   for (
     const item
@@ -850,16 +830,6 @@ periodCell.innerHTML = `
     course.style.gridColumn =
       dayIndex + 2;
 
-
-    /*
-     * 예:
-     *
-     * 2교시 수업
-     * grid row 4부터 5까지
-     *
-     * 2~4교시 수업
-     * 하나의 긴 블록으로 표시
-     */
 
     course.style.gridRow =
       `${item.start + 2} / ${item.end + 3}`;
@@ -962,10 +932,9 @@ function seoulNow() {
 /* ========================================
    현재 교시 계산
 
-   0교시 = 08:00~09:00
-   1교시 = 09:00~10:00
+   08:00 = 0교시
+   09:00 = 1교시
    ...
-   14교시 = 22:00~23:00
 ======================================== */
 
 function currentPeriod(now) {
@@ -1033,13 +1002,19 @@ function updateNowText() {
     );
 
 
-  nowText.textContent =
-
+  if (
     period === null
+  ) {
 
-      ? `서울시간 ${now.day}요일 ${hh}:${mm} · 현재 정규 교시 시간 밖입니다.`
+    nowText.textContent =
+      `서울시간 ${now.day}요일 ${hh}:${mm} · 현재 정규 수업 시간 밖입니다.`;
 
-      : `서울시간 ${now.day}요일 ${hh}:${mm} · 현재 ${period}교시 기준`;
+  } else {
+
+    nowText.textContent =
+      `서울시간 ${now.day}요일 ${hh}:${mm}`;
+
+  }
 
 
   return {
@@ -1101,7 +1076,7 @@ function allRooms() {
 
 
 /* ========================================
-   현재 빈 강의실
+   현재 빈 강의실 찾기
 ======================================== */
 
 function showFreeRooms() {
@@ -1118,9 +1093,7 @@ function showFreeRooms() {
     '';
 
 
-  /*
-   * 서비스 화면은 월~금 기준
-   */
+  /* 주말 */
 
   if (
     !DAYS.includes(
@@ -1140,9 +1113,7 @@ function showFreeRooms() {
   }
 
 
-  /*
-   * 현재 사용 중인 강의실
-   */
+  /* 현재 사용 중인 강의실 */
 
   const occupied =
     new Set(
@@ -1176,9 +1147,7 @@ function showFreeRooms() {
     );
 
 
-  /*
-   * 현재 비어 있는 강의실
-   */
+  /* 빈 강의실 */
 
   let rooms =
     allRooms()
@@ -1190,10 +1159,7 @@ function showFreeRooms() {
       );
 
 
-  /*
-   * 건물을 선택한 상태라면
-   * 해당 건물만 표시
-   */
+  /* 선택된 건물이 있으면 필터 */
 
   if (
     bSel.value
@@ -1226,9 +1192,7 @@ function showFreeRooms() {
   );
 
 
-  /*
-   * 건물별 그룹
-   */
+  /* 건물별 그룹 */
 
   const groups =
     new Map();
@@ -1264,9 +1228,7 @@ function showFreeRooms() {
   }
 
 
-  /*
-   * 결과 설명
-   */
+  /* 설명 */
 
   freeSummary.textContent =
 
@@ -1274,16 +1236,14 @@ function showFreeRooms() {
 
       ?
 
-      `${bSel.value ? bSel.value + ' · ' : ''}정규 교시 시간 밖이라 등록된 강의실 ${rooms.length}개를 표시합니다.`
+      `${bSel.value ? bSel.value + ' · ' : ''}정규 수업 시간 밖이라 등록된 강의실 ${rooms.length}개를 표시합니다.`
 
       :
 
-      `${now.day}요일 ${now.period}교시 · ${bSel.value ? bSel.value + ' · ' : ''}사용 가능 ${rooms.length}개`;
+      `${now.day}요일 ${displayHour(now.period)}시 · ${bSel.value ? bSel.value + ' · ' : ''}사용 가능 ${rooms.length}개`;
 
 
-  /*
-   * 강의실 버튼 생성
-   */
+  /* 결과 생성 */
 
   for (
     const [
@@ -1366,10 +1326,6 @@ function showFreeRooms() {
   }
 
 
-  /*
-   * 결과 없음
-   */
-
   if (
     !rooms.length
   ) {
@@ -1393,7 +1349,7 @@ function showFreeRooms() {
 
 
 /* ========================================
-   빈 강의실 버튼 클릭
+   강의실 바로 선택
 ======================================== */
 
 function selectRoom(
