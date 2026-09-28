@@ -1,4 +1,15 @@
-const DAYS = ['월', '화', '수', '목', '금'];
+/* ========================================
+   기본 설정
+======================================== */
+
+const DAYS = [
+  '월',
+  '화',
+  '수',
+  '목',
+  '금'
+];
+
 
 const COLORS = [
   '#dbeafe',
@@ -13,230 +24,480 @@ const COLORS = [
   '#d1fae5'
 ];
 
+
+/* ========================================
+   강의실 문자열 분석
+======================================== */
+
 const roomRe =
   /(.+?)-([A-Za-z]?\d+(?:-\d+)?)(?=\s+(?:.+?)-[A-Za-z]?\d+(?:-\d+)?(?:\s|$)|$)/g;
 
 
 function roomsOf(s) {
 
-  const a = [];
+  const rooms = [];
 
   roomRe.lastIndex = 0;
 
-  let m;
+  let match;
+
 
   while (
-    (m = roomRe.exec(String(s || '').trim()))
+    (
+      match =
+        roomRe.exec(
+          String(s || '').trim()
+        )
+    )
   ) {
 
-    a.push({
-      building: m[1].trim(),
-      room: m[2].trim(),
-      full: `${m[1].trim()}-${m[2].trim()}`
+    const building =
+      match[1].trim();
+
+    const room =
+      match[2].trim();
+
+
+    rooms.push({
+
+      building,
+
+      room,
+
+      full:
+        `${building}-${room}`
+
     });
 
   }
 
-  return a;
+
+  return rooms;
 }
 
 
+/* ========================================
+   시간 문자열 분석
+======================================== */
+
 function timesOf(s) {
 
-  const out = [];
+  const result = [];
 
   const re =
     /([월화수목금토일])\(([^)]*)\)/g;
 
-  let m;
+  let match;
+
 
   while (
-    (m = re.exec(String(s || '')))
+    (
+      match =
+        re.exec(
+          String(s || '')
+        )
+    )
   ) {
 
     const ranges = [];
 
-    for (const p of m[2].split(',')) {
 
-      const nums = p.match(/\d+/g);
+    for (
+      const part
+      of match[2].split(',')
+    ) {
 
-      if (!nums) continue;
+      const nums =
+        part.match(/\d+/g);
 
-      let a = +nums[0];
-      let b = +(nums[1] ?? nums[0]);
 
-      if (b < a) {
-        [a, b] = [b, a];
+      if (!nums) {
+        continue;
       }
 
+
+      let start =
+        Number(nums[0]);
+
+      let end =
+        Number(
+          nums[1] ??
+          nums[0]
+        );
+
+
+      if (
+        end < start
+      ) {
+
+        [
+          start,
+          end
+        ] = [
+          end,
+          start
+        ];
+
+      }
+
+
       ranges.push({
-        start: a,
-        end: b,
-        raw: p.trim()
+
+        start,
+
+        end,
+
+        raw:
+          part.trim()
+
       });
 
     }
 
-    if (ranges.length) {
 
-      out.push({
-        day: m[1],
+    if (
+      ranges.length
+    ) {
+
+      result.push({
+
+        day:
+          match[1],
+
         ranges
+
       });
 
     }
 
   }
 
-  return out;
+
+  return result;
 }
 
 
+/* ========================================
+   원본 데이터를 시간표 이벤트로 변환
+======================================== */
+
 function expand(rows) {
 
-  const out = [];
+  const result = [];
 
-  for (const r of rows) {
 
-    const rs = roomsOf(r.BLDG_COUM);
-    const ts = timesOf(r.LSTM_LIST);
+  for (
+    const row
+    of rows
+  ) {
 
-    if (!rs.length || !ts.length) {
+    const rooms =
+      roomsOf(
+        row.BLDG_COUM
+      );
+
+
+    const times =
+      timesOf(
+        row.LSTM_LIST
+      );
+
+
+    if (
+      !rooms.length ||
+      !times.length
+    ) {
+
       continue;
     }
 
-    ts.forEach((t, i) => {
 
-      const targets =
-        rs.length === ts.length
-          ? [rs[i]]
-          : rs;
+    times.forEach(
+      (time, index) => {
 
-      for (const rm of targets) {
+        const targets =
 
-        for (const q of t.ranges) {
+          rooms.length ===
+          times.length
 
-          out.push({
-            ...rm,
+            ? [
+                rooms[index]
+              ]
 
-            day: t.day,
+            : rooms;
 
-            start: q.start,
-            end: q.end,
 
-            subject:
-              r.SUBJ_KNM ||
-              r.SUBJ_CD_NM ||
-              '과목명 없음',
+        for (
+          const room
+          of targets
+        ) {
 
-            lect:
-              r.LECT_NUMB || '',
+          for (
+            const range
+            of time.ranges
+          ) {
 
-            prof:
-              r.PROF_NM || '',
+            result.push({
 
-            subj:
-              r.SUBJ_CD || ''
-          });
+              ...room,
+
+              day:
+                time.day,
+
+              start:
+                range.start,
+
+              end:
+                range.end,
+
+              subject:
+                row.SUBJ_KNM ||
+                row.SUBJ_CD_NM ||
+                '과목명 없음',
+
+              lect:
+                row.LECT_NUMB ||
+                '',
+
+              prof:
+                row.PROF_NM ||
+                '',
+
+              subj:
+                row.SUBJ_CD ||
+                ''
+
+            });
+
+          }
 
         }
 
       }
-
-    });
+    );
 
   }
 
 
-  const seen = new Set();
+  /*
+   * 중복 제거
+   */
 
-  return out.filter(x => {
+  const seen =
+    new Set();
 
-    const k = [
-      x.full,
-      x.day,
-      x.start,
-      x.end,
-      x.subject,
-      x.lect,
-      x.prof
-    ].join('|');
 
-    if (seen.has(k)) {
-      return false;
+  return result.filter(
+    item => {
+
+      const key = [
+
+        item.full,
+
+        item.day,
+
+        item.start,
+
+        item.end,
+
+        item.subject,
+
+        item.lect,
+
+        item.prof
+
+      ].join('|');
+
+
+      if (
+        seen.has(key)
+      ) {
+
+        return false;
+      }
+
+
+      seen.add(key);
+
+      return true;
     }
-
-    seen.add(k);
-
-    return true;
-  });
+  );
 }
 
 
-/*
- * 원본 데이터에는 토·일 수업도 그대로 남아 있다.
- * 시간표 화면에서만 월~금만 표시한다.
- */
-const S = expand(
-  window.SEOULTECH_RAW.rows || []
-);
+/* ========================================
+   데이터
+======================================== */
+
+const RAW =
+  window.SEOULTECH_RAW || {
+    semester: '',
+    rows: []
+  };
 
 
-const bSel =
-  document.querySelector('#building');
-
-const rSel =
-  document.querySelector('#room');
-
-const tt =
-  document.querySelector('#timetable');
-
-const summary =
-  document.querySelector('#summary');
-
-
-const findFreeBtn =
-  document.querySelector('#findFreeBtn');
-
-const closeFreeBtn =
-  document.querySelector('#closeFreeBtn');
-
-const freePanel =
-  document.querySelector('#freePanel');
-
-const freeRooms =
-  document.querySelector('#freeRooms');
-
-const freeSummary =
-  document.querySelector('#freeSummary');
-
-const nowText =
-  document.querySelector('#nowText');
-
-
-const nat = (a, b) =>
-  a.localeCompare(
-    b,
-    'ko',
-    { numeric: true }
+const S =
+  expand(
+    RAW.rows || []
   );
 
 
+/* ========================================
+   DOM
+======================================== */
+
+const bSel =
+  document.querySelector(
+    '#building'
+  );
+
+
+const rSel =
+  document.querySelector(
+    '#room'
+  );
+
+
+const tt =
+  document.querySelector(
+    '#timetable'
+  );
+
+
+const summary =
+  document.querySelector(
+    '#summary'
+  );
+
+
+const semesterText =
+  document.querySelector(
+    '#semesterText'
+  );
+
+
+const findFreeBtn =
+  document.querySelector(
+    '#findFreeBtn'
+  );
+
+
+const closeFreeBtn =
+  document.querySelector(
+    '#closeFreeBtn'
+  );
+
+
+const freePanel =
+  document.querySelector(
+    '#freePanel'
+  );
+
+
+const freeRooms =
+  document.querySelector(
+    '#freeRooms'
+  );
+
+
+const freeSummary =
+  document.querySelector(
+    '#freeSummary'
+  );
+
+
+const nowText =
+  document.querySelector(
+    '#nowText'
+  );
+
+
+/* ========================================
+   학기 표시
+======================================== */
+
+function updateSemesterText() {
+
+  const semester =
+    String(
+      RAW.semester || ''
+    );
+
+
+  const match =
+    semester.match(
+      /^(\d{4})([12])$/
+    );
+
+
+  if (
+    !match
+  ) {
+
+    semesterText.textContent =
+      '학기 정보';
+
+    return;
+  }
+
+
+  const year =
+    match[1];
+
+
+  const term =
+    match[2];
+
+
+  semesterText.textContent =
+    `${year}학년도 ${term}학기`;
+}
+
+
+/* ========================================
+   자연 정렬
+======================================== */
+
+const nat =
+  (a, b) =>
+    a.localeCompare(
+      b,
+      'ko',
+      {
+        numeric: true
+      }
+    );
+
+
+/* ========================================
+   건물 선택
+======================================== */
+
 function fillBuildings() {
 
-  const bs = [
+  const buildings = [
+
     ...new Set(
-      S.map(x => x.building)
+
+      S.map(
+        item =>
+          item.building
+      )
+
     )
+
   ].sort(nat);
 
 
   bSel.innerHTML =
-    '<option value="" selected>건물을 선택하세요</option>' +
 
-    bs.map(
-      x =>
-        `<option value="${esc(x)}">${esc(x)}</option>`
+    '<option value="" selected>건물을 선택하세요</option>'
+
+    +
+
+    buildings.map(
+      building =>
+        `<option value="${esc(building)}">${esc(building)}</option>`
     ).join('');
 
 
@@ -244,14 +505,23 @@ function fillBuildings() {
 }
 
 
+/* ========================================
+   강의실 선택
+======================================== */
+
 function fillRooms() {
 
-  if (!bSel.value) {
+  if (
+    !bSel.value
+  ) {
 
     rSel.innerHTML =
       '<option value="" selected>강의실을 선택하세요</option>';
 
-    rSel.disabled = true;
+
+    rSel.disabled =
+      true;
+
 
     render();
 
@@ -259,29 +529,39 @@ function fillRooms() {
   }
 
 
-  const rs = [
+  const rooms = [
+
     ...new Set(
+
       S
         .filter(
-          x =>
-            x.building === bSel.value
+          item =>
+            item.building ===
+            bSel.value
         )
         .map(
-          x => x.room
+          item =>
+            item.room
         )
+
     )
+
   ].sort(nat);
 
 
-  rSel.disabled = false;
+  rSel.disabled =
+    false;
 
 
   rSel.innerHTML =
-    '<option value="" selected>강의실을 선택하세요</option>' +
 
-    rs.map(
-      x =>
-        `<option value="${esc(x)}">${esc(x)}</option>`
+    '<option value="" selected>강의실을 선택하세요</option>'
+
+    +
+
+    rooms.map(
+      room =>
+        `<option value="${esc(room)}">${esc(room)}</option>`
     ).join('');
 
 
@@ -289,11 +569,19 @@ function fillRooms() {
 }
 
 
+/* ========================================
+   과목 색상
+======================================== */
+
 function hash(s) {
 
   let h = 0;
 
-  for (const c of s) {
+
+  for (
+    const c
+    of s
+  ) {
 
     h =
       (
@@ -303,114 +591,162 @@ function hash(s) {
 
   }
 
+
   return h;
 }
 
 
-/* =========================
+/* ========================================
    시간표 렌더링
-========================= */
+======================================== */
 
 function render() {
 
-  tt.innerHTML = '';
+  tt.innerHTML =
+    '';
 
 
-  /* 왼쪽 위 빈 칸 */
+  /*
+   * 왼쪽 위 빈 칸
+   */
 
   const blank =
-    document.createElement('div');
+    document.createElement(
+      'div'
+    );
+
 
   blank.className =
     'cell head';
 
-  blank.style.gridColumn = 1;
-  blank.style.gridRow = 1;
 
-  tt.append(blank);
+  blank.style.gridColumn =
+    1;
+
+
+  blank.style.gridRow =
+    1;
+
+
+  tt.append(
+    blank
+  );
 
 
   /*
-   * 월~금 헤더
+   * 월 ~ 금
    */
 
   DAYS.forEach(
-    (d, i) => {
+    (day, index) => {
 
-      const e =
-        document.createElement('div');
+      const element =
+        document.createElement(
+          'div'
+        );
 
-      e.className =
+
+      element.className =
         'cell head';
 
-      e.textContent = d;
 
-      e.style.gridColumn =
-        i + 2;
+      element.textContent =
+        day;
 
-      e.style.gridRow = 1;
 
-      tt.append(e);
+      element.style.gridColumn =
+        index + 2;
+
+
+      element.style.gridRow =
+        1;
+
+
+      tt.append(
+        element
+      );
 
     }
   );
 
 
   /*
-   * 0교시 ~ 14교시
+   * 0 ~ 14교시
    */
 
   for (
-    let p = 0;
-    p <= 14;
-    p++
+    let period = 0;
+    period <= 14;
+    period++
   ) {
 
-    const e =
-      document.createElement('div');
+    const periodCell =
+      document.createElement(
+        'div'
+      );
 
-    e.className =
+
+    periodCell.className =
       'cell period';
 
-    e.textContent =
-      `${p}교시`;
 
-    e.style.gridColumn = 1;
+    periodCell.textContent =
+      `${period}교시`;
 
-    e.style.gridRow =
-      p + 2;
 
-    tt.append(e);
+    periodCell.style.gridColumn =
+      1;
+
+
+    periodCell.style.gridRow =
+      period + 2;
+
+
+    tt.append(
+      periodCell
+    );
 
 
     /*
-     * 월~금 5칸 생성
+     * 월~금 빈 셀
      */
 
     for (
-      let d = 0;
-      d < DAYS.length;
-      d++
+      let day = 0;
+      day < DAYS.length;
+      day++
     ) {
 
-      const c =
-        document.createElement('div');
+      const cell =
+        document.createElement(
+          'div'
+        );
 
-      c.className =
+
+      cell.className =
         'cell';
 
-      c.style.gridColumn =
-        d + 2;
 
-      c.style.gridRow =
-        p + 2;
+      cell.style.gridColumn =
+        day + 2;
 
-      tt.append(c);
+
+      cell.style.gridRow =
+        period + 2;
+
+
+      tt.append(
+        cell
+      );
 
     }
 
   }
 
+
+  /*
+   * 아직 선택하지 않은 경우
+   */
 
   if (
     !bSel.value ||
@@ -418,74 +754,131 @@ function render() {
   ) {
 
     summary.textContent =
+
       !bSel.value
+
         ? '건물을 선택하세요.'
+
         : '강의실을 선택하세요.';
+
 
     return;
   }
 
 
   /*
-   * 선택된 강의실의 월~금 수업만 표시
+   * 선택된 강의실의
+   * 월~금 수업만 가져온다.
    */
 
   const list =
     S.filter(
-      x =>
-        x.building === bSel.value &&
-        x.room === rSel.value &&
-        DAYS.includes(x.day)
+      item =>
+
+        item.building ===
+          bSel.value
+
+        &&
+
+        item.room ===
+          rSel.value
+
+        &&
+
+        DAYS.includes(
+          item.day
+        )
     );
 
 
-  for (const x of list) {
+  /*
+   * 수업 블록
+   */
+
+  for (
+    const item
+    of list
+  ) {
 
     const dayIndex =
-      DAYS.indexOf(x.day);
+      DAYS.indexOf(
+        item.day
+      );
 
-    if (dayIndex < 0) {
+
+    if (
+      dayIndex < 0
+    ) {
+
       continue;
     }
 
 
-    const e =
-      document.createElement('div');
+    const course =
+      document.createElement(
+        'div'
+      );
 
 
-    e.className =
+    course.className =
       'course';
 
 
-    e.style.background =
+    course.style.background =
+
       COLORS[
+
         hash(
-          x.subject +
-          x.lect
-        ) %
+          item.subject +
+          item.lect
+        )
+
+        %
+
         COLORS.length
+
       ];
 
 
-    e.style.gridColumn =
+    course.style.gridColumn =
       dayIndex + 2;
 
 
-    e.style.gridRow =
-      `${x.start + 2} / ${x.end + 3}`;
+    /*
+     * 예:
+     *
+     * 2교시 수업
+     * grid row 4부터 5까지
+     *
+     * 2~4교시 수업
+     * 하나의 긴 블록으로 표시
+     */
+
+    course.style.gridRow =
+      `${item.start + 2} / ${item.end + 3}`;
 
 
-    e.innerHTML =
-      `${esc(x.subject)}` +
+    course.innerHTML =
+
+      esc(
+        item.subject
+      )
+
+      +
 
       (
-        x.lect
-          ? `<small>${esc(x.lect)}분반</small>`
+        item.lect
+
+          ? `<small>${esc(item.lect)}분반</small>`
+
           : ''
       );
 
 
-    tt.append(e);
+    tt.append(
+      course
+    );
+
   }
 
 
@@ -494,9 +887,9 @@ function render() {
 }
 
 
-/* =========================
-   현재 서울 시간
-========================= */
+/* ========================================
+   서울 현재 시간
+======================================== */
 
 function seoulNow() {
 
@@ -524,13 +917,15 @@ function seoulNow() {
     );
 
 
-  const get = t =>
-    parts.find(
-      x => x.type === t
-    )?.value || '';
+  const get =
+    type =>
+      parts.find(
+        item =>
+          item.type === type
+      )?.value || '';
 
 
-  const wd =
+  const weekday =
     get('weekday')
       .replace(
         '요일',
@@ -539,23 +934,39 @@ function seoulNow() {
 
 
   return {
+
     day:
-      wd.slice(0, 1),
+      weekday.slice(0, 1),
 
     hour:
-      +get('hour'),
+      Number(
+        get('hour')
+      ),
 
     minute:
-      +get('minute')
+      Number(
+        get('minute')
+      )
+
   };
 }
 
+
+/* ========================================
+   현재 교시 계산
+
+   0교시 = 08:00~09:00
+   1교시 = 09:00~10:00
+   ...
+   14교시 = 22:00~23:00
+======================================== */
 
 function currentPeriod(now) {
 
   const minutes =
     now.hour * 60 +
     now.minute;
+
 
   const start =
     8 * 60;
@@ -571,47 +982,72 @@ function currentPeriod(now) {
 
 
   return Math.floor(
-    (minutes - start) / 60
+    (
+      minutes -
+      start
+    )
+    /
+    60
   );
 }
 
 
+/* ========================================
+   현재 시간 문구
+======================================== */
+
 function updateNowText() {
 
-  const n =
+  const now =
     seoulNow();
 
-  const p =
-    currentPeriod(n);
+
+  const period =
+    currentPeriod(
+      now
+    );
 
 
   const hh =
-    String(n.hour)
-      .padStart(2, '0');
+    String(
+      now.hour
+    ).padStart(
+      2,
+      '0'
+    );
+
 
   const mm =
-    String(n.minute)
-      .padStart(2, '0');
+    String(
+      now.minute
+    ).padStart(
+      2,
+      '0'
+    );
 
 
   nowText.textContent =
-    p === null
 
-      ? `서울시간 ${n.day}요일 ${hh}:${mm} · 현재 정규 교시 시간 밖입니다.`
+    period === null
 
-      : `서울시간 ${n.day}요일 ${hh}:${mm} · 현재 ${p}교시 기준`;
+      ? `서울시간 ${now.day}요일 ${hh}:${mm} · 현재 정규 교시 시간 밖입니다.`
+
+      : `서울시간 ${now.day}요일 ${hh}:${mm} · 현재 ${period}교시 기준`;
 
 
   return {
-    ...n,
-    period: p
+
+    ...now,
+
+    period
+
   };
 }
 
 
-/* =========================
-   빈 강의실
-========================= */
+/* ========================================
+   모든 강의실
+======================================== */
 
 function allRooms() {
 
@@ -619,23 +1055,30 @@ function allRooms() {
     new Map();
 
 
-  for (const x of S) {
+  for (
+    const item
+    of S
+  ) {
 
     if (
-      !map.has(x.full)
+      !map.has(
+        item.full
+      )
     ) {
 
       map.set(
-        x.full,
+        item.full,
         {
+
           building:
-            x.building,
+            item.building,
 
           room:
-            x.room,
+            item.room,
 
           full:
-            x.full
+            item.full
+
         }
       );
 
@@ -650,9 +1093,13 @@ function allRooms() {
 }
 
 
+/* ========================================
+   현재 빈 강의실
+======================================== */
+
 function showFreeRooms() {
 
-  const n =
+  const now =
     updateNowText();
 
 
@@ -665,53 +1112,81 @@ function showFreeRooms() {
 
 
   /*
-   * 토요일 / 일요일에는
-   * 평일 시간표 서비스 기준으로 안내
+   * 서비스 화면은 월~금 기준
    */
 
   if (
-    !DAYS.includes(n.day)
+    !DAYS.includes(
+      now.day
+    )
   ) {
 
     freeSummary.textContent =
       '현재 서비스는 월요일부터 금요일까지의 강의실 시간표를 표시합니다.';
 
+
     freeRooms.innerHTML =
       '<div class="building-group">주말에는 평일 강의실 시간표를 제공하지 않습니다.</div>';
+
 
     return;
   }
 
 
+  /*
+   * 현재 사용 중인 강의실
+   */
+
   const occupied =
     new Set(
 
-      n.period === null
+      now.period === null
 
         ? []
 
-        : S.filter(
-            x =>
-              x.day === n.day &&
-              x.start <= n.period &&
-              x.end >= n.period
-          )
-          .map(
-            x => x.full
-          )
+        : S
+            .filter(
+              item =>
+
+                item.day ===
+                  now.day
+
+                &&
+
+                item.start <=
+                  now.period
+
+                &&
+
+                item.end >=
+                  now.period
+            )
+            .map(
+              item =>
+                item.full
+            )
 
     );
 
 
+  /*
+   * 현재 비어 있는 강의실
+   */
+
   let rooms =
     allRooms()
       .filter(
-        x =>
+        room =>
           !occupied.has(
-            x.full
+            room.full
           )
       );
 
+
+  /*
+   * 건물을 선택한 상태라면
+   * 해당 건물만 표시
+   */
 
   if (
     bSel.value
@@ -719,8 +1194,8 @@ function showFreeRooms() {
 
     rooms =
       rooms.filter(
-        x =>
-          x.building ===
+        room =>
+          room.building ===
           bSel.value
       );
 
@@ -729,10 +1204,14 @@ function showFreeRooms() {
 
   rooms.sort(
     (a, b) =>
+
       nat(
         a.building,
         b.building
-      ) ||
+      )
+
+      ||
+
       nat(
         a.room,
         b.room
@@ -740,22 +1219,27 @@ function showFreeRooms() {
   );
 
 
+  /*
+   * 건물별 그룹
+   */
+
   const groups =
     new Map();
 
 
   for (
-    const x of rooms
+    const room
+    of rooms
   ) {
 
     if (
       !groups.has(
-        x.building
+        room.building
       )
     ) {
 
       groups.set(
-        x.building,
+        room.building,
         []
       );
 
@@ -763,21 +1247,42 @@ function showFreeRooms() {
 
 
     groups
-      .get(x.building)
-      .push(x);
+      .get(
+        room.building
+      )
+      .push(
+        room
+      );
+
   }
 
 
+  /*
+   * 결과 설명
+   */
+
   freeSummary.textContent =
-    n.period === null
 
-      ? `${bSel.value ? bSel.value + ' · ' : ''}정규 교시 시간 밖이라 등록된 강의실 ${rooms.length}개를 표시합니다.`
+    now.period === null
 
-      : `${n.day}요일 ${n.period}교시 · ${bSel.value ? bSel.value + ' · ' : ''}사용 가능 ${rooms.length}개`;
+      ?
 
+      `${bSel.value ? bSel.value + ' · ' : ''}정규 교시 시간 밖이라 등록된 강의실 ${rooms.length}개를 표시합니다.`
+
+      :
+
+      `${now.day}요일 ${now.period}교시 · ${bSel.value ? bSel.value + ' · ' : ''}사용 가능 ${rooms.length}개`;
+
+
+  /*
+   * 강의실 버튼 생성
+   */
 
   for (
-    const [building, list]
+    const [
+      building,
+      list
+    ]
     of groups
   ) {
 
@@ -792,8 +1297,13 @@ function showFreeRooms() {
 
 
     box.innerHTML =
-      `<h3>${esc(building)} · ${list.length}개</h3>
-       <div class="room-chips"></div>`;
+      `
+        <h3>
+          ${esc(building)} · ${list.length}개
+        </h3>
+
+        <div class="room-chips"></div>
+      `;
 
 
     const chips =
@@ -803,39 +1313,40 @@ function showFreeRooms() {
 
 
     for (
-      const x of list
+      const room
+      of list
     ) {
 
-      const btn =
+      const button =
         document.createElement(
           'button'
         );
 
 
-      btn.type =
+      button.type =
         'button';
 
 
-      btn.className =
+      button.className =
         'room-chip';
 
 
-      btn.textContent =
-        x.room;
+      button.textContent =
+        room.room;
 
 
-      btn.addEventListener(
+      button.addEventListener(
         'click',
         () =>
           selectRoom(
-            x.building,
-            x.room
+            room.building,
+            room.room
           )
       );
 
 
       chips.append(
-        btn
+        button
       );
 
     }
@@ -848,6 +1359,10 @@ function showFreeRooms() {
   }
 
 
+  /*
+   * 결과 없음
+   */
+
   if (
     !rooms.length
   ) {
@@ -859,11 +1374,20 @@ function showFreeRooms() {
 
 
   freePanel.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
+
+    behavior:
+      'smooth',
+
+    block:
+      'start'
+
   });
 }
 
+
+/* ========================================
+   빈 강의실 버튼 클릭
+======================================== */
 
 function selectRoom(
   building,
@@ -893,36 +1417,51 @@ function selectRoom(
       '.controls'
     )
     .scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
+
+      behavior:
+        'smooth',
+
+      block:
+        'start'
+
     });
 }
 
 
-/* =========================
+/* ========================================
    HTML 안전 처리
-========================= */
+======================================== */
 
 function esc(s) {
 
   return String(s)
     .replace(
       /[&<>"']/g,
-      c =>
-        ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
-        }[c])
+      char => ({
+
+        '&':
+          '&amp;',
+
+        '<':
+          '&lt;',
+
+        '>':
+          '&gt;',
+
+        '"':
+          '&quot;',
+
+        "'":
+          '&#39;'
+
+      }[char])
     );
 }
 
 
-/* =========================
+/* ========================================
    이벤트
-========================= */
+======================================== */
 
 bSel.addEventListener(
   'change',
@@ -930,11 +1469,13 @@ bSel.addEventListener(
 
     fillRooms();
 
+
     if (
       !freePanel.hidden
     ) {
 
       showFreeRooms();
+
     }
 
   }
@@ -955,18 +1496,25 @@ findFreeBtn.addEventListener(
 
 closeFreeBtn.addEventListener(
   'click',
-  () =>
-    freePanel.hidden = true
+  () => {
+
+    freePanel.hidden =
+      true;
+
+  }
 );
 
 
-/* =========================
+/* ========================================
    시작
-========================= */
+======================================== */
+
+updateSemesterText();
 
 fillBuildings();
 
 updateNowText();
+
 
 setInterval(
   updateNowText,
