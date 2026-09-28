@@ -16,6 +16,17 @@ BASE = "https://for-s.seoultech.ac.kr"
 PAGE = BASE + "/html/pub/schedule.jsp"
 API = BASE + "/JSONMain"
 DEPARTMENTS = ['20030105', '20030111', '20030309', '20030301', '20030305', '300037', '300036', 'C581564', 'C581781', '20031201', '20030505', 'C581682', 'C581681', '20030701', '20030703', '20030705', '20030707', '20031110', '20031111', 'C581774', '300014', '300013', '20030905', '20030907', '20030909', '20031103', '20031105', '20031107', 'C581754', '20031404', '20033003', '20031403', '20033004', '20033002', '20031405', 'C581488', 'C581461', '20031500', '20031501', '20031503', '20031502', '20031504', '20031505', '20031506', 'C581766', 'C581700', 'C581755', 'C581652', 'C581651', '300015', '20050109', 'C581659', 'C581671', 'C581751', 'C581779', 'C581778', 'C581777', '300029']
+EXCLUDED_DEPARTMENT_CODES = {
+    "20031501",  # 융합기계공학과
+    "20031503",  # 헬스피트니스학과
+    "20031502",  # 건설환경융합공학과
+    "20031504",  # 문화예술학과
+    "20031505",  # 영어과
+    "20031506",  # 벤처경영학과
+    "C581766",   # AI융합품질공학전공
+    "C581700",   # 정보통신융합공학과
+}
+
 ROOT = Path(__file__).resolve().parent
 
 # 사이트에서 제외할 학과/전공
@@ -58,7 +69,9 @@ session.get(PAGE, timeout=30).raise_for_status()
 
 rows = []
 failures = []
-for i, less_cd in enumerate(DEPARTMENTS, 1):
+ACTIVE_DEPARTMENTS = [code for code in DEPARTMENTS if code not in EXCLUDED_DEPARTMENT_CODES]
+
+for i, less_cd in enumerate(ACTIVE_DEPARTMENTS, 1):
     payload = {
         "fsp_action": "GridAction",
         "fsp_cmd": "getScheduleGridData",
@@ -81,6 +94,15 @@ for i, less_cd in enumerate(DEPARTMENTS, 1):
             for row in got:
                 row = dict(row)
                 row["_source_less_cd"] = less_cd
+
+                # Safety net: excluded departments must never enter the public dataset.
+                row_codes = {
+                    str(row.get("_source_less_cd") or "").strip(),
+                    str(row.get("LESS_CD") or "").strip(),
+                }
+                if row_codes & EXCLUDED_DEPARTMENT_CODES:
+                    continue
+
                 rows.append(row)
             last_error = None
             break
