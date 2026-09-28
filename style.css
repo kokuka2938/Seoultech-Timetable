@@ -872,3 +872,67 @@ footer {
   }
 
 }
+/* ========================================
+   교시 실제 시간 표시
+======================================== */
+
+.period {
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.1;
+}
+
+.period-number {
+  display: block;
+  font-weight: 700;
+}
+
+.period-time {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #98a2b3;
+  white-space: nowrap;
+}
+
+
+/* 모바일 */
+
+@media (max-width: 650px) {
+
+  .period {
+    font-size: 9px;
+    gap: 2px;
+  }
+
+  .period-time {
+    font-size: 8px;
+  }
+
+}
+
+
+/* 작은 스마트폰 */
+
+@media (max-width: 380px) {
+
+  .period-number {
+    font-size: 8px;
+  }
+
+  .period-time {
+    font-size: 7px;
+  }
+
+}
+
+
+/* 다크모드 */
+
+@media (prefers-color-scheme: dark) {
+
+  .period-time {
+    color: #6b7280;
+  }
+
+}
