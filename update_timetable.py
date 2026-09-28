@@ -18,6 +18,32 @@ API = BASE + "/JSONMain"
 DEPARTMENTS = ['20030105', '20030111', '20030309', '20030301', '20030305', '300037', '300036', 'C581564', 'C581781', '20031201', '20030505', 'C581682', 'C581681', '20030701', '20030703', '20030705', '20030707', '20031110', '20031111', 'C581774', '300014', '300013', '20030905', '20030907', '20030909', '20031103', '20031105', '20031107', 'C581754', '20031404', '20033003', '20031403', '20033004', '20033002', '20031405', 'C581488', 'C581461', '20031500', '20031501', '20031503', '20031502', '20031504', '20031505', '20031506', 'C581766', 'C581700', 'C581755', 'C581652', 'C581651', '300015', '20050109', 'C581659', 'C581671', 'C581751', 'C581779', 'C581778', 'C581777', '300029']
 ROOT = Path(__file__).resolve().parent
 
+# 사이트에서 제외할 학과/전공
+EXCLUDED_DEPARTMENTS = {
+    "융합기계공학과",
+    "헬스피트니스학과",
+    "건설환경융합공학과",
+    "문화예술학과",
+    "영어과",
+    "벤처경영학과",
+    "AI융합품질공학전공",
+    "정보통신융합공학과",
+}
+
+def is_excluded_department(row):
+    # 학교 데이터에서 학과명이 들어올 수 있는 필드를 모두 확인한다.
+    # exact match를 사용해 비슷한 이름의 다른 학과가 실수로 제외되지 않게 한다.
+    department_fields = (
+        row.get("MNG_LESS_NM"),
+        row.get("SP_LESS_CD_NM"),
+        row.get("_source_less_name"),
+    )
+    return any(
+        str(name).strip() in EXCLUDED_DEPARTMENTS
+        for name in department_fields
+        if name
+    )
+
 session = requests.Session()
 session.headers.update({
     "User-Agent": "Mozilla/5.0 (compatible; SeoulTechTimetableUpdater/1.0)",
@@ -71,6 +97,12 @@ if failures:
 if len(rows) < 1000:
     raise SystemExit(f"Safety check failed: only {len(rows)} rows returned.")
 
+# 제외 학과의 강의는 raw JSON과 data.js 양쪽에서 모두 제거한다.
+# 따라서 일반 시간표와 '현재 사용 가능한 강의실' 계산에도 반영되지 않는다.
+before_filter = len(rows)
+rows = [row for row in rows if not is_excluded_department(row)]
+excluded_count = before_filter - len(rows)
+
 # Remove duplicate raw records caused by overlapping source queries, while retaining
 # the source marker for traceability. Site-side code also deduplicates occupancy events.
 raw_doc = {"semester": SEMESTER, "rows": rows}
@@ -80,4 +112,4 @@ raw_text = json.dumps(raw_doc, ensure_ascii=False, indent=2) + "\n"
     "window.SEOULTECH_RAW = " + json.dumps(raw_doc, ensure_ascii=False, separators=(",", ":")) + ";\n",
     encoding="utf-8"
 )
-print(f"Updated {len(rows)} raw timetable rows from {len(DEPARTMENTS)} department codes.")
+print(f"Updated {len(rows)} raw timetable rows from {len(DEPARTMENTS)} department codes; excluded {excluded_count} rows from excluded departments.")
