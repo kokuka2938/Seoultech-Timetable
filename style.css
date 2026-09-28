@@ -718,3 +718,157 @@ footer {
     align-self: flex-end;
   }
 }
+/* ========================================
+   자동 다크모드
+   기기 설정이 다크모드일 때 자동 적용
+======================================== */
+
+@media (prefers-color-scheme: dark) {
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: #111827;
+    color: #f3f4f6;
+  }
+
+
+  /* HEADER */
+
+  header p {
+    color: #9ca3af;
+  }
+
+
+  /* 현재 빈 강의실 카드 */
+
+  .quick-card {
+    background: #1f2937;
+    color: #f9fafb;
+
+    box-shadow:
+      0 4px 20px #00000035;
+  }
+
+  .quick-card p {
+    color: #9ca3af;
+  }
+
+  .quick-card button {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+
+  /* 빈 강의실 결과 */
+
+  .free-panel {
+    background: #1f2937;
+
+    border-color: #374151;
+
+    box-shadow:
+      0 4px 20px #00000030;
+  }
+
+  .free-head p {
+    color: #9ca3af;
+  }
+
+  .ghost-btn {
+    background: #273244;
+    color: #e5e7eb;
+
+    border-color: #4b5563;
+  }
+
+  .building-group {
+    background: #1f2937;
+
+    border-color: #374151;
+  }
+
+  .room-chip {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+
+  /* 건물 / 강의실 선택 */
+
+  .controls {
+    background: #1f2937;
+
+    box-shadow:
+      0 4px 20px #00000030;
+  }
+
+  .controls select {
+    background: #273244;
+    color: #f3f4f6;
+
+    border-color: #4b5563;
+  }
+
+  .controls select:disabled {
+    background: #252d3a;
+    color: #6b7280;
+  }
+
+
+  /* 선택 정보 */
+
+  #summary {
+    color: #cbd5e1;
+  }
+
+
+  /* 시간표 */
+
+  .table-wrap {
+    background: #1f2937;
+
+    box-shadow:
+      0 4px 20px #00000030;
+  }
+
+  .cell {
+    border-right-color: #374151;
+    border-bottom-color: #374151;
+  }
+
+  .head,
+  .period {
+    background: #273244;
+  }
+
+  .head {
+    color: #f3f4f6;
+  }
+
+  .period {
+    color: #9ca3af;
+  }
+
+
+  /* 수업 블록
+     기존 파스텔 색은 유지하되
+     글자를 어둡게 해서 가독성 유지 */
+
+  .course {
+    color: #172033;
+
+    box-shadow:
+      0 1px 4px #00000045;
+  }
+
+
+  /* FOOTER */
+
+  footer {
+    color: #6b7280;
+  }
+
+}
