@@ -1,22 +1,974 @@
-const DAYS=['월','화','수','목','금','토','일'];
-const COLORS=['#dbeafe','#dcfce7','#fef3c7','#fce7f3','#ede9fe','#cffafe','#ffedd5','#e0e7ff','#fae8ff','#d1fae5'];
-const roomRe=/(.+?)-([A-Za-z]?\d+(?:-\d+)?)(?=\s+(?:.+?)-[A-Za-z]?\d+(?:-\d+)?(?:\s|$)|$)/g;
-function roomsOf(s){const a=[];roomRe.lastIndex=0;let m;while((m=roomRe.exec(String(s||'').trim())))a.push({building:m[1].trim(),room:m[2].trim(),full:`${m[1].trim()}-${m[2].trim()}`});return a}
-function timesOf(s){const out=[];const re=/([월화수목금토일])\(([^)]*)\)/g;let m;while((m=re.exec(String(s||'')))){const ranges=[];for(const p of m[2].split(',')){const nums=p.match(/\d+/g);if(!nums)continue;let a=+nums[0],b=+(nums[1]??nums[0]);if(b<a)[a,b]=[b,a];ranges.push({start:a,end:b,raw:p.trim()})}if(ranges.length)out.push({day:m[1],ranges})}return out}
-function expand(rows){const out=[];for(const r of rows){const rs=roomsOf(r.BLDG_COUM),ts=timesOf(r.LSTM_LIST);if(!rs.length||!ts.length)continue;ts.forEach((t,i)=>{const targets=rs.length===ts.length?[rs[i]]:rs;for(const rm of targets)for(const q of t.ranges)out.push({...rm,day:t.day,start:q.start,end:q.end,subject:r.SUBJ_KNM||r.SUBJ_CD_NM||'과목명 없음',lect:r.LECT_NUMB||'',prof:r.PROF_NM||'',subj:r.SUBJ_CD||''})})}const seen=new Set();return out.filter(x=>{const k=[x.full,x.day,x.start,x.end,x.subject,x.lect,x.prof].join('|');if(seen.has(k))return false;seen.add(k);return true})}
-const S=expand(window.SEOULTECH_RAW.rows||[]);
-const bSel=document.querySelector('#building'),rSel=document.querySelector('#room'),tt=document.querySelector('#timetable'),summary=document.querySelector('#summary');
-const findFreeBtn=document.querySelector('#findFreeBtn'),closeFreeBtn=document.querySelector('#closeFreeBtn'),freePanel=document.querySelector('#freePanel'),freeRooms=document.querySelector('#freeRooms'),freeSummary=document.querySelector('#freeSummary'),nowText=document.querySelector('#nowText');
-const nat=(a,b)=>a.localeCompare(b,'ko',{numeric:true});
-function fillBuildings(){const bs=[...new Set(S.map(x=>x.building))].sort(nat);bSel.innerHTML='<option value="" selected>건물을 선택하세요</option>'+bs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');fillRooms()}
-function fillRooms(){if(!bSel.value){rSel.innerHTML='<option value="" selected>강의실을 선택하세요</option>';rSel.disabled=true;render();return}const rs=[...new Set(S.filter(x=>x.building===bSel.value).map(x=>x.room))].sort(nat);rSel.disabled=false;rSel.innerHTML='<option value="" selected>강의실을 선택하세요</option>'+rs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');render()}
-function hash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
-function render(){tt.innerHTML='';const blank=document.createElement('div');blank.className='cell head';tt.append(blank);DAYS.forEach((d,i)=>{const e=document.createElement('div');e.className='cell head';e.textContent=d;e.style.gridColumn=i+2;e.style.gridRow=1;tt.append(e)});for(let p=0;p<=14;p++){const e=document.createElement('div');e.className='cell period';e.textContent=`${p}교시`;e.style.gridColumn=1;e.style.gridRow=p+2;tt.append(e);for(let d=0;d<7;d++){const c=document.createElement('div');c.className='cell';c.style.gridColumn=d+2;c.style.gridRow=p+2;tt.append(c)}}if(!bSel.value||!rSel.value){summary.textContent=!bSel.value?'건물을 선택하세요.':'강의실을 선택하세요.';return}const list=S.filter(x=>x.building===bSel.value&&x.room===rSel.value);for(const x of list){const e=document.createElement('div');e.className='course';e.style.background=COLORS[hash(x.subject+x.lect)%COLORS.length];e.style.gridColumn=DAYS.indexOf(x.day)+2;e.style.gridRow=`${x.start+2} / ${x.end+3}`;e.innerHTML=`${esc(x.subject)}${x.lect?`<small>${esc(x.lect)}분반</small>`:''}`;tt.append(e)}summary.textContent=`${bSel.value} ${rSel.value} · 등록된 수업 ${list.length}개`}
-function seoulNow(){const parts=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const get=t=>parts.find(x=>x.type===t)?.value||'';const wd=get('weekday').replace('요일','');return{day:wd.slice(0,1),hour:+get('hour'),minute:+get('minute')}}
-function currentPeriod(now){const minutes=now.hour*60+now.minute;const start=8*60;if(minutes<start||minutes>=23*60)return null;return Math.floor((minutes-start)/60)}
-function updateNowText(){const n=seoulNow(),p=currentPeriod(n);const hh=String(n.hour).padStart(2,'0'),mm=String(n.minute).padStart(2,'0');nowText.textContent=p===null?`서울시간 ${n.day}요일 ${hh}:${mm} · 현재 정규 교시 시간 밖입니다.`:`서울시간 ${n.day}요일 ${hh}:${mm} · 현재 ${p}교시 기준`;return{...n,period:p}}
-function allRooms(){const map=new Map();for(const x of S){if(!map.has(x.full))map.set(x.full,{building:x.building,room:x.room,full:x.full})}return[...map.values()]}
-function showFreeRooms(){const n=updateNowText();freePanel.hidden=false;freeRooms.innerHTML='';if(!DAYS.includes(n.day)){freeSummary.textContent='오늘은 시간표 요일 정보를 확인할 수 없습니다.';return}const occupied=new Set(n.period===null?[]:S.filter(x=>x.day===n.day&&x.start<=n.period&&x.end>=n.period).map(x=>x.full));let rooms=allRooms().filter(x=>!occupied.has(x.full));if(bSel.value)rooms=rooms.filter(x=>x.building===bSel.value);rooms.sort((a,b)=>nat(a.building,b.building)||nat(a.room,b.room));const groups=new Map();for(const x of rooms){if(!groups.has(x.building))groups.set(x.building,[]);groups.get(x.building).push(x)}freeSummary.textContent=n.period===null?`${bSel.value?bSel.value+' · ':''}정규 교시 시간 밖이라 등록된 강의실 ${rooms.length}개를 표시합니다.`:`${n.day}요일 ${n.period}교시 · ${bSel.value?bSel.value+' · ':''}사용 가능 ${rooms.length}개`;for(const [building,list] of groups){const box=document.createElement('section');box.className='building-group';box.innerHTML=`<h3>${esc(building)} · ${list.length}개</h3><div class="room-chips"></div>`;const chips=box.querySelector('.room-chips');for(const x of list){const btn=document.createElement('button');btn.type='button';btn.className='room-chip';btn.textContent=x.room;btn.addEventListener('click',()=>selectRoom(x.building,x.room));chips.append(btn)}freeRooms.append(box)}if(!rooms.length)freeRooms.innerHTML='<div class="building-group">현재 조건에서 사용 가능한 강의실이 없습니다.</div>';freePanel.scrollIntoView({behavior:'smooth',block:'start'})}
-function selectRoom(building,room){bSel.value=building;fillRooms();rSel.value=room;render();freePanel.hidden=true;document.querySelector('.controls').scrollIntoView({behavior:'smooth',block:'start'})}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-bSel.addEventListener('change',()=>{fillRooms();if(!freePanel.hidden)showFreeRooms()});rSel.addEventListener('change',render);findFreeBtn.addEventListener('click',showFreeRooms);closeFreeBtn.addEventListener('click',()=>freePanel.hidden=true);fillBuildings();updateNowText();setInterval(updateNowText,60000);
+const DAYS = ['월', '화', '수', '목', '금'];
+
+const COLORS = [
+  '#dbeafe',
+  '#dcfce7',
+  '#fef3c7',
+  '#fce7f3',
+  '#ede9fe',
+  '#cffafe',
+  '#ffedd5',
+  '#e0e7ff',
+  '#fae8ff',
+  '#d1fae5'
+];
+
+const roomRe =
+  /(.+?)-([A-Za-z]?\d+(?:-\d+)?)(?=\s+(?:.+?)-[A-Za-z]?\d+(?:-\d+)?(?:\s|$)|$)/g;
+
+
+function roomsOf(s) {
+
+  const a = [];
+
+  roomRe.lastIndex = 0;
+
+  let m;
+
+  while (
+    (m = roomRe.exec(String(s || '').trim()))
+  ) {
+
+    a.push({
+      building: m[1].trim(),
+      room: m[2].trim(),
+      full: `${m[1].trim()}-${m[2].trim()}`
+    });
+
+  }
+
+  return a;
+}
+
+
+function timesOf(s) {
+
+  const out = [];
+
+  const re =
+    /([월화수목금토일])\(([^)]*)\)/g;
+
+  let m;
+
+  while (
+    (m = re.exec(String(s || '')))
+  ) {
+
+    const ranges = [];
+
+    for (const p of m[2].split(',')) {
+
+      const nums = p.match(/\d+/g);
+
+      if (!nums) continue;
+
+      let a = +nums[0];
+      let b = +(nums[1] ?? nums[0]);
+
+      if (b < a) {
+        [a, b] = [b, a];
+      }
+
+      ranges.push({
+        start: a,
+        end: b,
+        raw: p.trim()
+      });
+
+    }
+
+    if (ranges.length) {
+
+      out.push({
+        day: m[1],
+        ranges
+      });
+
+    }
+
+  }
+
+  return out;
+}
+
+
+function expand(rows) {
+
+  const out = [];
+
+  for (const r of rows) {
+
+    const rs = roomsOf(r.BLDG_COUM);
+    const ts = timesOf(r.LSTM_LIST);
+
+    if (!rs.length || !ts.length) {
+      continue;
+    }
+
+    ts.forEach((t, i) => {
+
+      const targets =
+        rs.length === ts.length
+          ? [rs[i]]
+          : rs;
+
+      for (const rm of targets) {
+
+        for (const q of t.ranges) {
+
+          out.push({
+            ...rm,
+
+            day: t.day,
+
+            start: q.start,
+            end: q.end,
+
+            subject:
+              r.SUBJ_KNM ||
+              r.SUBJ_CD_NM ||
+              '과목명 없음',
+
+            lect:
+              r.LECT_NUMB || '',
+
+            prof:
+              r.PROF_NM || '',
+
+            subj:
+              r.SUBJ_CD || ''
+          });
+
+        }
+
+      }
+
+    });
+
+  }
+
+
+  const seen = new Set();
+
+  return out.filter(x => {
+
+    const k = [
+      x.full,
+      x.day,
+      x.start,
+      x.end,
+      x.subject,
+      x.lect,
+      x.prof
+    ].join('|');
+
+    if (seen.has(k)) {
+      return false;
+    }
+
+    seen.add(k);
+
+    return true;
+  });
+}
+
+
+/*
+ * 원본 데이터에는 토·일 수업도 그대로 남아 있다.
+ * 시간표 화면에서만 월~금만 표시한다.
+ */
+const S = expand(
+  window.SEOULTECH_RAW.rows || []
+);
+
+
+const bSel =
+  document.querySelector('#building');
+
+const rSel =
+  document.querySelector('#room');
+
+const tt =
+  document.querySelector('#timetable');
+
+const summary =
+  document.querySelector('#summary');
+
+
+const findFreeBtn =
+  document.querySelector('#findFreeBtn');
+
+const closeFreeBtn =
+  document.querySelector('#closeFreeBtn');
+
+const freePanel =
+  document.querySelector('#freePanel');
+
+const freeRooms =
+  document.querySelector('#freeRooms');
+
+const freeSummary =
+  document.querySelector('#freeSummary');
+
+const nowText =
+  document.querySelector('#nowText');
+
+
+const nat = (a, b) =>
+  a.localeCompare(
+    b,
+    'ko',
+    { numeric: true }
+  );
+
+
+function fillBuildings() {
+
+  const bs = [
+    ...new Set(
+      S.map(x => x.building)
+    )
+  ].sort(nat);
+
+
+  bSel.innerHTML =
+    '<option value="" selected>건물을 선택하세요</option>' +
+
+    bs.map(
+      x =>
+        `<option value="${esc(x)}">${esc(x)}</option>`
+    ).join('');
+
+
+  fillRooms();
+}
+
+
+function fillRooms() {
+
+  if (!bSel.value) {
+
+    rSel.innerHTML =
+      '<option value="" selected>강의실을 선택하세요</option>';
+
+    rSel.disabled = true;
+
+    render();
+
+    return;
+  }
+
+
+  const rs = [
+    ...new Set(
+      S
+        .filter(
+          x =>
+            x.building === bSel.value
+        )
+        .map(
+          x => x.room
+        )
+    )
+  ].sort(nat);
+
+
+  rSel.disabled = false;
+
+
+  rSel.innerHTML =
+    '<option value="" selected>강의실을 선택하세요</option>' +
+
+    rs.map(
+      x =>
+        `<option value="${esc(x)}">${esc(x)}</option>`
+    ).join('');
+
+
+  render();
+}
+
+
+function hash(s) {
+
+  let h = 0;
+
+  for (const c of s) {
+
+    h =
+      (
+        h * 31 +
+        c.charCodeAt(0)
+      ) >>> 0;
+
+  }
+
+  return h;
+}
+
+
+/* =========================
+   시간표 렌더링
+========================= */
+
+function render() {
+
+  tt.innerHTML = '';
+
+
+  /* 왼쪽 위 빈 칸 */
+
+  const blank =
+    document.createElement('div');
+
+  blank.className =
+    'cell head';
+
+  blank.style.gridColumn = 1;
+  blank.style.gridRow = 1;
+
+  tt.append(blank);
+
+
+  /*
+   * 월~금 헤더
+   */
+
+  DAYS.forEach(
+    (d, i) => {
+
+      const e =
+        document.createElement('div');
+
+      e.className =
+        'cell head';
+
+      e.textContent = d;
+
+      e.style.gridColumn =
+        i + 2;
+
+      e.style.gridRow = 1;
+
+      tt.append(e);
+
+    }
+  );
+
+
+  /*
+   * 0교시 ~ 14교시
+   */
+
+  for (
+    let p = 0;
+    p <= 14;
+    p++
+  ) {
+
+    const e =
+      document.createElement('div');
+
+    e.className =
+      'cell period';
+
+    e.textContent =
+      `${p}교시`;
+
+    e.style.gridColumn = 1;
+
+    e.style.gridRow =
+      p + 2;
+
+    tt.append(e);
+
+
+    /*
+     * 월~금 5칸 생성
+     */
+
+    for (
+      let d = 0;
+      d < DAYS.length;
+      d++
+    ) {
+
+      const c =
+        document.createElement('div');
+
+      c.className =
+        'cell';
+
+      c.style.gridColumn =
+        d + 2;
+
+      c.style.gridRow =
+        p + 2;
+
+      tt.append(c);
+
+    }
+
+  }
+
+
+  if (
+    !bSel.value ||
+    !rSel.value
+  ) {
+
+    summary.textContent =
+      !bSel.value
+        ? '건물을 선택하세요.'
+        : '강의실을 선택하세요.';
+
+    return;
+  }
+
+
+  /*
+   * 선택된 강의실의 월~금 수업만 표시
+   */
+
+  const list =
+    S.filter(
+      x =>
+        x.building === bSel.value &&
+        x.room === rSel.value &&
+        DAYS.includes(x.day)
+    );
+
+
+  for (const x of list) {
+
+    const dayIndex =
+      DAYS.indexOf(x.day);
+
+    if (dayIndex < 0) {
+      continue;
+    }
+
+
+    const e =
+      document.createElement('div');
+
+
+    e.className =
+      'course';
+
+
+    e.style.background =
+      COLORS[
+        hash(
+          x.subject +
+          x.lect
+        ) %
+        COLORS.length
+      ];
+
+
+    e.style.gridColumn =
+      dayIndex + 2;
+
+
+    e.style.gridRow =
+      `${x.start + 2} / ${x.end + 3}`;
+
+
+    e.innerHTML =
+      `${esc(x.subject)}` +
+
+      (
+        x.lect
+          ? `<small>${esc(x.lect)}분반</small>`
+          : ''
+      );
+
+
+    tt.append(e);
+  }
+
+
+  summary.textContent =
+    `${bSel.value} ${rSel.value} · 월~금 등록 수업 ${list.length}개`;
+}
+
+
+/* =========================
+   현재 서울 시간
+========================= */
+
+function seoulNow() {
+
+  const parts =
+    new Intl.DateTimeFormat(
+      'ko-KR',
+      {
+        timeZone:
+          'Asia/Seoul',
+
+        weekday:
+          'short',
+
+        hour:
+          '2-digit',
+
+        minute:
+          '2-digit',
+
+        hourCycle:
+          'h23'
+      }
+    ).formatToParts(
+      new Date()
+    );
+
+
+  const get = t =>
+    parts.find(
+      x => x.type === t
+    )?.value || '';
+
+
+  const wd =
+    get('weekday')
+      .replace(
+        '요일',
+        ''
+      );
+
+
+  return {
+    day:
+      wd.slice(0, 1),
+
+    hour:
+      +get('hour'),
+
+    minute:
+      +get('minute')
+  };
+}
+
+
+function currentPeriod(now) {
+
+  const minutes =
+    now.hour * 60 +
+    now.minute;
+
+  const start =
+    8 * 60;
+
+
+  if (
+    minutes < start ||
+    minutes >= 23 * 60
+  ) {
+
+    return null;
+  }
+
+
+  return Math.floor(
+    (minutes - start) / 60
+  );
+}
+
+
+function updateNowText() {
+
+  const n =
+    seoulNow();
+
+  const p =
+    currentPeriod(n);
+
+
+  const hh =
+    String(n.hour)
+      .padStart(2, '0');
+
+  const mm =
+    String(n.minute)
+      .padStart(2, '0');
+
+
+  nowText.textContent =
+    p === null
+
+      ? `서울시간 ${n.day}요일 ${hh}:${mm} · 현재 정규 교시 시간 밖입니다.`
+
+      : `서울시간 ${n.day}요일 ${hh}:${mm} · 현재 ${p}교시 기준`;
+
+
+  return {
+    ...n,
+    period: p
+  };
+}
+
+
+/* =========================
+   빈 강의실
+========================= */
+
+function allRooms() {
+
+  const map =
+    new Map();
+
+
+  for (const x of S) {
+
+    if (
+      !map.has(x.full)
+    ) {
+
+      map.set(
+        x.full,
+        {
+          building:
+            x.building,
+
+          room:
+            x.room,
+
+          full:
+            x.full
+        }
+      );
+
+    }
+
+  }
+
+
+  return [
+    ...map.values()
+  ];
+}
+
+
+function showFreeRooms() {
+
+  const n =
+    updateNowText();
+
+
+  freePanel.hidden =
+    false;
+
+
+  freeRooms.innerHTML =
+    '';
+
+
+  /*
+   * 토요일 / 일요일에는
+   * 평일 시간표 서비스 기준으로 안내
+   */
+
+  if (
+    !DAYS.includes(n.day)
+  ) {
+
+    freeSummary.textContent =
+      '현재 서비스는 월요일부터 금요일까지의 강의실 시간표를 표시합니다.';
+
+    freeRooms.innerHTML =
+      '<div class="building-group">주말에는 평일 강의실 시간표를 제공하지 않습니다.</div>';
+
+    return;
+  }
+
+
+  const occupied =
+    new Set(
+
+      n.period === null
+
+        ? []
+
+        : S.filter(
+            x =>
+              x.day === n.day &&
+              x.start <= n.period &&
+              x.end >= n.period
+          )
+          .map(
+            x => x.full
+          )
+
+    );
+
+
+  let rooms =
+    allRooms()
+      .filter(
+        x =>
+          !occupied.has(
+            x.full
+          )
+      );
+
+
+  if (
+    bSel.value
+  ) {
+
+    rooms =
+      rooms.filter(
+        x =>
+          x.building ===
+          bSel.value
+      );
+
+  }
+
+
+  rooms.sort(
+    (a, b) =>
+      nat(
+        a.building,
+        b.building
+      ) ||
+      nat(
+        a.room,
+        b.room
+      )
+  );
+
+
+  const groups =
+    new Map();
+
+
+  for (
+    const x of rooms
+  ) {
+
+    if (
+      !groups.has(
+        x.building
+      )
+    ) {
+
+      groups.set(
+        x.building,
+        []
+      );
+
+    }
+
+
+    groups
+      .get(x.building)
+      .push(x);
+  }
+
+
+  freeSummary.textContent =
+    n.period === null
+
+      ? `${bSel.value ? bSel.value + ' · ' : ''}정규 교시 시간 밖이라 등록된 강의실 ${rooms.length}개를 표시합니다.`
+
+      : `${n.day}요일 ${n.period}교시 · ${bSel.value ? bSel.value + ' · ' : ''}사용 가능 ${rooms.length}개`;
+
+
+  for (
+    const [building, list]
+    of groups
+  ) {
+
+    const box =
+      document.createElement(
+        'section'
+      );
+
+
+    box.className =
+      'building-group';
+
+
+    box.innerHTML =
+      `<h3>${esc(building)} · ${list.length}개</h3>
+       <div class="room-chips"></div>`;
+
+
+    const chips =
+      box.querySelector(
+        '.room-chips'
+      );
+
+
+    for (
+      const x of list
+    ) {
+
+      const btn =
+        document.createElement(
+          'button'
+        );
+
+
+      btn.type =
+        'button';
+
+
+      btn.className =
+        'room-chip';
+
+
+      btn.textContent =
+        x.room;
+
+
+      btn.addEventListener(
+        'click',
+        () =>
+          selectRoom(
+            x.building,
+            x.room
+          )
+      );
+
+
+      chips.append(
+        btn
+      );
+
+    }
+
+
+    freeRooms.append(
+      box
+    );
+
+  }
+
+
+  if (
+    !rooms.length
+  ) {
+
+    freeRooms.innerHTML =
+      '<div class="building-group">현재 조건에서 사용 가능한 강의실이 없습니다.</div>';
+
+  }
+
+
+  freePanel.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+
+function selectRoom(
+  building,
+  room
+) {
+
+  bSel.value =
+    building;
+
+
+  fillRooms();
+
+
+  rSel.value =
+    room;
+
+
+  render();
+
+
+  freePanel.hidden =
+    true;
+
+
+  document
+    .querySelector(
+      '.controls'
+    )
+    .scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+}
+
+
+/* =========================
+   HTML 안전 처리
+========================= */
+
+function esc(s) {
+
+  return String(s)
+    .replace(
+      /[&<>"']/g,
+      c =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[c])
+    );
+}
+
+
+/* =========================
+   이벤트
+========================= */
+
+bSel.addEventListener(
+  'change',
+  () => {
+
+    fillRooms();
+
+    if (
+      !freePanel.hidden
+    ) {
+
+      showFreeRooms();
+    }
+
+  }
+);
+
+
+rSel.addEventListener(
+  'change',
+  render
+);
+
+
+findFreeBtn.addEventListener(
+  'click',
+  showFreeRooms
+);
+
+
+closeFreeBtn.addEventListener(
+  'click',
+  () =>
+    freePanel.hidden = true
+);
+
+
+/* =========================
+   시작
+========================= */
+
+fillBuildings();
+
+updateNowText();
+
+setInterval(
+  updateNowText,
+  60000
+);
