@@ -1,1 +1,596 @@
-*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#f5f7fb;color:#172033}button,select{font:inherit}button{touch-action:manipulation}main{max-width:1180px;margin:auto;padding:20px}header h1{margin:0;font-size:clamp(24px,5vw,38px);letter-spacing:-.035em}header p{margin:7px 0 18px;color:#667085}.quick-card{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:12px;padding:16px 18px;background:#172033;color:#fff;border-radius:16px;box-shadow:0 4px 20px #10182818}.quick-card strong{font-size:16px}.quick-card p{margin:5px 0 0;color:#cbd5e1;font-size:13px}.quick-card button{flex:0 0 auto;min-height:46px;padding:0 16px;border:0;border-radius:11px;background:#fff;color:#172033;font-weight:800;cursor:pointer}.free-panel{margin-bottom:12px;padding:16px;background:#fff;border:1px solid #eaecf0;border-radius:16px;box-shadow:0 4px 20px #1018280d}.free-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.free-head h2{margin:0;font-size:18px}.free-head p{margin:5px 0 0;color:#667085;font-size:13px}.ghost-btn{min-height:38px;padding:0 12px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#475467;font-weight:700;cursor:pointer}.free-rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:14px}.building-group{border:1px solid #eaecf0;border-radius:12px;padding:12px}.building-group h3{margin:0 0 9px;font-size:14px}.room-chips{display:flex;flex-wrap:wrap;gap:7px}.room-chip{border:0;border-radius:9px;background:#f2f4f7;color:#344054;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer}.room-chip:active{transform:scale(.98)}.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:white;padding:14px;border-radius:16px;box-shadow:0 4px 20px #1018280d}.controls label{font-size:13px;font-weight:700}.controls select{display:block;width:100%;min-height:48px;margin-top:7px;padding:10px 12px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;color:#172033;font-size:16px}.controls select:disabled{background:#f2f4f7;color:#98a2b3}#summary{min-height:20px;margin:14px 2px;color:#475467;font-size:14px}.mobile-hint{display:none;margin:0 2px 8px;color:#98a2b3;font-size:11px}.table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;border-radius:16px;background:#fff;box-shadow:0 4px 20px #1018280d;overscroll-behavior-x:contain}.timetable{display:grid;grid-template-columns:72px repeat(7,minmax(118px,1fr));grid-template-rows:48px repeat(15,64px);min-width:900px;position:relative}.cell{border-right:1px solid #eaecf0;border-bottom:1px solid #eaecf0;padding:6px}.head,.period{display:flex;align-items:center;justify-content:center;font-weight:700;background:#fafafa;position:sticky;z-index:4}.head{top:0}.period{left:0;font-size:12px;color:#667085;z-index:5}.head:first-child{left:0;z-index:6}.course{margin:3px;border-radius:9px;padding:7px 6px;font-size:12px;font-weight:700;overflow:hidden;z-index:3;box-shadow:0 1px 4px #00000012;line-height:1.25}.course small{display:block;margin-top:3px;font-weight:500;opacity:.75}footer{padding:16px 4px;color:#98a2b3;font-size:12px}@media(max-width:650px){main{padding:14px 10px 30px}header h1{font-size:26px}header p{font-size:13px;margin-bottom:14px}.quick-card{align-items:stretch;flex-direction:column;padding:15px;border-radius:14px}.quick-card button{width:100%;min-height:50px}.free-panel{padding:13px;border-radius:14px}.free-rooms{grid-template-columns:1fr}.room-chip{min-height:40px}.controls{grid-template-columns:1fr;padding:12px;border-radius:14px;gap:10px}.controls select{min-height:50px}.mobile-hint{display:block}.table-wrap{border-radius:14px}.timetable{grid-template-columns:58px repeat(7,108px);grid-template-rows:44px repeat(15,58px);min-width:814px}.course{font-size:11px;padding:5px}.period{font-size:11px}footer{text-align:center}}@media(max-width:380px){main{padding-left:8px;padding-right:8px}.timetable{grid-template-columns:54px repeat(7,104px);min-width:782px}.free-head{align-items:stretch;flex-direction:column}.ghost-btn{align-self:flex-end}}
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 20px;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+header h1 {
+  margin: 0;
+  font-size: clamp(24px, 5vw, 38px);
+  letter-spacing: -.035em;
+}
+
+header p {
+  margin: 7px 0 18px;
+  color: #667085;
+}
+
+
+/* =========================
+   QUICK CARD
+========================= */
+
+.quick-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  margin-bottom: 12px;
+  padding: 16px 18px;
+
+  background: #172033;
+  color: #fff;
+
+  border-radius: 16px;
+  box-shadow: 0 4px 20px #10182818;
+}
+
+.quick-card strong {
+  font-size: 16px;
+}
+
+.quick-card p {
+  margin: 5px 0 0;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.quick-card button {
+  flex: 0 0 auto;
+
+  min-height: 46px;
+  padding: 0 16px;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: #fff;
+  color: #172033;
+
+  font-weight: 800;
+  cursor: pointer;
+}
+
+
+/* =========================
+   FREE ROOMS
+========================= */
+
+.free-panel {
+  margin-bottom: 12px;
+  padding: 16px;
+
+  background: #fff;
+  border: 1px solid #eaecf0;
+  border-radius: 16px;
+
+  box-shadow: 0 4px 20px #1018280d;
+}
+
+.free-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.free-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.free-head p {
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.ghost-btn {
+  min-height: 38px;
+  padding: 0 12px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 9px;
+
+  background: #fff;
+  color: #475467;
+
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.free-rooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+
+  margin-top: 14px;
+}
+
+.building-group {
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.building-group h3 {
+  margin: 0 0 9px;
+  font-size: 14px;
+}
+
+.room-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.room-chip {
+  border: 0;
+  border-radius: 9px;
+
+  background: #f2f4f7;
+  color: #344054;
+
+  padding: 8px 10px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.room-chip:active {
+  transform: scale(.98);
+}
+
+
+/* =========================
+   CONTROLS
+========================= */
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  background: white;
+
+  padding: 14px;
+  border-radius: 16px;
+
+  box-shadow: 0 4px 20px #1018280d;
+}
+
+.controls label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.controls select {
+  display: block;
+
+  width: 100%;
+  min-height: 48px;
+
+  margin-top: 7px;
+  padding: 10px 12px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+
+  background: #fff;
+  color: #172033;
+
+  font-size: 16px;
+}
+
+.controls select:disabled {
+  background: #f2f4f7;
+  color: #98a2b3;
+}
+
+
+/* =========================
+   SUMMARY
+========================= */
+
+#summary {
+  min-height: 20px;
+  margin: 14px 2px;
+
+  color: #475467;
+  font-size: 14px;
+}
+
+
+/* PC에서는 안내문 숨김 */
+
+.mobile-hint {
+  display: none;
+}
+
+
+/* =========================
+   TIMETABLE - PC
+========================= */
+
+.table-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+
+  border-radius: 16px;
+  background: #fff;
+
+  box-shadow: 0 4px 20px #1018280d;
+  overscroll-behavior-x: contain;
+}
+
+.timetable {
+  display: grid;
+
+  grid-template-columns:
+    72px
+    repeat(7, minmax(118px, 1fr));
+
+  grid-template-rows:
+    48px
+    repeat(15, 64px);
+
+  min-width: 900px;
+
+  position: relative;
+}
+
+.cell {
+  border-right: 1px solid #eaecf0;
+  border-bottom: 1px solid #eaecf0;
+
+  padding: 6px;
+}
+
+.head,
+.period {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+
+  background: #fafafa;
+
+  position: sticky;
+  z-index: 4;
+}
+
+.head {
+  top: 0;
+}
+
+.period {
+  left: 0;
+
+  font-size: 12px;
+  color: #667085;
+
+  z-index: 5;
+}
+
+.head:first-child {
+  left: 0;
+  z-index: 6;
+}
+
+.course {
+  margin: 3px;
+
+  border-radius: 9px;
+
+  padding: 7px 6px;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+
+  overflow: hidden;
+
+  z-index: 3;
+
+  box-shadow: 0 1px 4px #00000012;
+}
+
+.course small {
+  display: block;
+
+  margin-top: 3px;
+
+  font-weight: 500;
+
+  opacity: .75;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+footer {
+  padding: 16px 4px;
+
+  color: #98a2b3;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   MOBILE
+   7일 전체를 화면 안에 표시
+========================================================= */
+
+@media (max-width: 650px) {
+
+  main {
+    padding: 14px 8px 30px;
+  }
+
+
+  /* HEADER */
+
+  header h1 {
+    font-size: 26px;
+  }
+
+  header p {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+
+
+  /* QUICK CARD */
+
+  .quick-card {
+    align-items: stretch;
+    flex-direction: column;
+
+    padding: 15px;
+
+    border-radius: 14px;
+  }
+
+  .quick-card button {
+    width: 100%;
+    min-height: 50px;
+  }
+
+
+  /* FREE ROOMS */
+
+  .free-panel {
+    padding: 13px;
+    border-radius: 14px;
+  }
+
+  .free-rooms {
+    grid-template-columns: 1fr;
+  }
+
+  .room-chip {
+    min-height: 40px;
+  }
+
+
+  /* CONTROLS */
+
+  .controls {
+    grid-template-columns: 1fr;
+
+    padding: 12px;
+
+    border-radius: 14px;
+
+    gap: 10px;
+  }
+
+  .controls select {
+    min-height: 50px;
+  }
+
+
+  /*
+   * 이제 가로 스크롤이 필요 없기 때문에
+   * 기존의 "좌우로 밀기" 안내를 숨긴다.
+   */
+
+  .mobile-hint {
+    display: none;
+  }
+
+
+  /*
+   * 시간표 컨테이너 자체가
+   * 화면 밖으로 나가지 않게 한다.
+   */
+
+  .table-wrap {
+    width: 100%;
+
+    overflow-x: hidden;
+    overflow-y: visible;
+
+    border-radius: 12px;
+  }
+
+
+  /*
+   * 핵심 부분
+   *
+   * 왼쪽 교시 = 34px
+   * 나머지 공간 = 7개 요일이 동일하게 분배
+   */
+
+  .timetable {
+    width: 100%;
+    min-width: 0;
+
+    grid-template-columns:
+      34px
+      repeat(7, minmax(0, 1fr));
+
+    grid-template-rows:
+      38px
+      repeat(15, 54px);
+  }
+
+
+  /* 모든 셀의 여백 최소화 */
+
+  .cell {
+    min-width: 0;
+    padding: 2px;
+  }
+
+
+  /* 요일 */
+
+  .head {
+    font-size: 11px;
+    padding: 0;
+  }
+
+
+  /* 교시 */
+
+  .period {
+    font-size: 9px;
+    padding: 0;
+
+    white-space: nowrap;
+  }
+
+
+  /*
+   * 과목 블록
+   * 좁은 폭에서도 최대한 읽을 수 있게 설정
+   */
+
+  .course {
+    min-width: 0;
+
+    margin: 2px;
+
+    padding: 4px 2px;
+
+    border-radius: 6px;
+
+    font-size: 9px;
+    line-height: 1.15;
+
+    overflow: hidden;
+
+    overflow-wrap: anywhere;
+    word-break: keep-all;
+
+    box-shadow: none;
+  }
+
+
+  /*
+   * 모바일에서는 부가 정보가 있다면
+   * 너무 복잡해지므로 숨김
+   */
+
+  .course small {
+    display: none;
+  }
+
+
+  footer {
+    text-align: center;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 380px) {
+
+  main {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .timetable {
+    grid-template-columns:
+      30px
+      repeat(7, minmax(0, 1fr));
+  }
+
+  .head {
+    font-size: 10px;
+  }
+
+  .period {
+    font-size: 8px;
+  }
+
+  .course {
+    margin: 1px;
+    padding: 3px 1px;
+
+    font-size: 8px;
+
+    border-radius: 5px;
+  }
+
+
+  .free-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ghost-btn {
+    align-self: flex-end;
+  }
+}
